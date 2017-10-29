@@ -15,17 +15,18 @@ require_once('VkConfig.php');
 
 $debug = $_GET['debug'] ?? false;
 
-$config = new VkConfig('http://dnap.su/rssfilter/VkToRss/feed.php');
-$vk = new Vk(array(
-    'client_id' => 3159394, // (required) app id
-    'secret_key' => 'nnjbGNj48fD7mdHleJi0', // (required) get on https://vk.com/editapp?id=12345&section=options
-    'user_id' => 86504, // your user id on vk.com
-    'scope' => 'wall,friends', // scope access
-    'v' => '5.52', // vk api version
+$channelHref = 'http://dnap.su/rssfilter/VkToRss/feed.php';
+$config = new VkConfig($channelHref);
+$vk = new Vk([
+    'client_id'    => 3159394, // (required) app id
+    'secret_key'   => 'nnjbGNj48fD7mdHleJi0', // (required) get on https://vk.com/editapp?id=12345&section=options
+    'user_id'      => 86504, // your user id on vk.com
+    'scope'        => 'wall,friends', // scope access
+    'v'            => '5.52', // vk api version
     'access_token' => $config->getKey(),
-));
+]);
 
-try {
+try{
     if (empty($vk->api('users.get')) || !empty($_GET['newToken'])) {
         $html = $config->newKey($vk);
     }
@@ -37,8 +38,6 @@ if ($debug) {
     echo $html;
     return;
 }
-
-$channelHref = 'http://dnap.su/rssfilter/VkToRss/feed.php';
 
 $RB = new RSSBuilder();
 $RB->addChannel($channelHref);
@@ -52,7 +51,7 @@ if (!empty($html)) {
     $RB->addItemElement('pubDate', date('r'));
     $RB->addItemElement('guid', 'error');
 } else {
-    try {
+    try{
         $newsFeed = $vk->api("newsfeed.get", [
             'fields' => 'photo_50'
         ]);
@@ -62,7 +61,7 @@ if (!empty($html)) {
         //$vkRender->allowGeocoding = false;
         $guids = [];
         foreach ($newsFeed['items'] as $item) {
-            $guid = md5($item['post_id'] ?? $item['date'].':'.$item['source_id']);
+            $guid = md5($item['post_id'] ?? $item['date'] . ':' . $item['source_id']);
             if (in_array($guid, $guids)) {
                 continue;
             }
